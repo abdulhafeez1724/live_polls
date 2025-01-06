@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Live Polls</title>
+</head>
+<body>
+    <h1>Live Polling System</h1>
+    {% for poll in polls %}
+        <div>
+            <h2>{{ poll.question }}</h2>
+            {% for choice in poll.choices.all %}
+                <button onclick="vote({{ choice.id }})">{{ choice.choice_text }}</button>
+            {% endfor %}
+        </div>
+    {% endfor %}
+    <div id="results"></div>
+
+    <script>
+        const socket = new WebSocket('ws://' + window.location.host + '/ws/poll/');
+        console.log("socket", socket);
+
+        socket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            data.results.forEach(result => {
+                resultsDiv.innerHTML += `<p>${result.choice_text}: ${result.votes}</p>`;
+            });
+        };
+
+        function vote(choiceId) {
+            socket.send(JSON.stringify({ choice_id: choiceId }));
+        }
+    </script>
+</body>
+</html>
